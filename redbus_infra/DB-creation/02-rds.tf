@@ -90,6 +90,9 @@ module "vpc" {
   create_database_subnet_route_table = true
   enable_dns_hostnames = true
   enable_dns_support = true
+  enable_nat_gateway = true
+  enable_vpn_gateway = true
+  create_database_internet_gateway_route = true
 
 }
 
@@ -102,13 +105,30 @@ module "security_group" {
   vpc_id      = module.vpc.vpc_id
 
   # ingress
+#  ingress_rules = ["ssh-tcp"]
+#  ingress_cidr_blocks = ["0.0.0.0/0"]
+  egress_rules = ["all-all"]
   ingress_with_cidr_blocks = [
     {
       from_port   = 5432
       to_port     = 5432
       protocol    = "tcp"
-      description = "PostgreSQL access from within VPC"
-      cidr_blocks = module.vpc.vpc_cidr_block
+      description = "PostgreSQL access from everywhere"
+#      cidr_blocks = module.vpc.vpc_cidr_block
+      cidr_blocks = "0.0.0.0/0"
+    },
+    {
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      description = "SSH access from everywhere"
+      cidr_blocks = "0.0.0.0/0"
     },
   ]
+}
+
+resource "aws_route" "public_internet_gateway" {
+  route_table_id = module.vpc.default_route_table_id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id = module.vpc.igw_id
 }
