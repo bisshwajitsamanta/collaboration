@@ -1,5 +1,5 @@
 locals {
-  name = "redbuslogin"
+  name = "loginredbus"
   dbName = "Logindb"
   user = "devopsadmin"
   port = "5432"
@@ -49,6 +49,7 @@ module "db" {
   monitoring_role_name                  = local.monitoringRole
   monitoring_role_use_name_prefix       = true
   monitoring_role_description           = "Monitoring Redbus Infrastructure"
+  publicly_accessible = true
 
   parameters = [
     {
@@ -87,6 +88,8 @@ module "vpc" {
 
   create_database_subnet_group       = true
   create_database_subnet_route_table = true
+  enable_dns_hostnames = true
+  enable_dns_support = true
 
 }
 
