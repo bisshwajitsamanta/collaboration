@@ -7,9 +7,13 @@ import (
 
 func Run() error {
 	fmt.Println("Redbus Ticketing Service")
-	_, err := db.NewDatabase()
+	database, err := db.NewDatabase()
 	if err != nil {
 		fmt.Println("Failed to connect to Database")
+		return err
+	}
+	if err := database.MigrateDB(); err != nil {
+		fmt.Println("Failed to Migrate Database")
 		return err
 	}
 	fmt.Println("Successfully connected to Database")

@@ -5,11 +5,6 @@ terraform {
       version = "~> 4.0"
     }
   }
-  backend "s3" {
-    bucket = "redbus-infra-eb1a"
-    key = "rds.tfstate"
-    region = "us-east-1"
-  }
 }
 provider "aws" {
   region  = var.region
