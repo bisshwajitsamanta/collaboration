@@ -1,6 +1,6 @@
 locals {
   availability_zone = "${local.region}a"
-  name              = "login-db-ec2-volume-attachment"
+  name              = "redbus-jumphost"
   region            = "us-east-1"
   tags = {
     Owner       = "Bisshwajit"
@@ -18,7 +18,7 @@ module "ec2_public" {
   instance_type          = var.instance_type
   key_name               = var.instance_keypair
   monitoring             = true
-  vpc_security_group_ids = ["sg-12345678"]
+  vpc_security_group_ids = [module.ec2_public_sg.security_group_id]
   subnet_id              = "subnet-eddcdzz4"
 
   tags = {

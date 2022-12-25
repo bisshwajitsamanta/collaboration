@@ -4,6 +4,6 @@ resource "aws_elasticache_cluster" "example" {
   node_type            = "cache.t2.micro"
   num_cache_nodes      = 1
   parameter_group_name = "default.redis7"
-  engine_version       = "7.0.4"
+  engine_version       = "7.0"
   port                 = 6379
 }

@@ -6,7 +6,7 @@ terraform {
     }
   }
   backend "s3" {
-    bucket = "redbus-infra-9905"
+    bucket = "redbus-infra-eb1a"
     key = "rds.tfstate"
     region = "us-east-1"
   }

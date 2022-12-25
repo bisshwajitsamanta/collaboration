@@ -1,7 +1,6 @@
 package db
 
 import (
-	"context"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -12,15 +11,18 @@ type Database struct {
 	Client *sqlx.DB
 }
 
-// Singleton object - where
-// File descriptor, total limit on
-// New ports will also open
+/*
+									==== SingleTon Implementation ===
+ Singleton object creation, so that if one connection dbClient presents no need to create other db connections.
+ It saves us from having out of File descriptor issue and also ports running out because of say multiple client
+ connections to our RDS Postgresql Database.
+
+*/
 var (
 	dbClient *Database
 )
 
 func NewDatabase() (*Database, error) {
-	fmt.Println(dbClient)
 	if dbClient == nil {
 		connectionString := fmt.Sprintf(
 			"host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
@@ -35,14 +37,9 @@ func NewDatabase() (*Database, error) {
 		if err != nil {
 			return &Database{}, fmt.Errorf("Could not connect to the Database:%w", err)
 		}
-		// Whenever we are accessing a pointer ,  check null pointer exception
 		dbClient = &Database{
 			Client: conn,
 		}
 	}
 	return dbClient, nil
-}
-
-func (d *Database) Ping(ctx context.Context) error {
-	return d.Client.PingContext(ctx)
 }
