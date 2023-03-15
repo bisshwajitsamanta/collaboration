@@ -23,8 +23,7 @@ type EbsVolume struct {
 	InuseState string
 }
 
-// InitialiseAWSCreds - This is to initialise the AWS Session
-func InitialiseAWSCreds() (*ec2.EC2, error) {
+func AssessEncryption(region string) {
 	awsAccessKey, awsSecretAccessKey := os.Getenv("AWS_ACCESS_KEY"), os.Getenv("AWS_SECRET_KEY")
 	creds := credentials.NewStaticCredentials(awsAccessKey, awsSecretAccessKey, "")
 	config := aws.Config{
@@ -36,18 +35,21 @@ func InitialiseAWSCreds() (*ec2.EC2, error) {
 		fmt.Println(err)
 	}
 	svc := ec2.New(sess)
-	return svc, nil
-}
-
-func AssessEncryption(region string, Client *ec2.EC2) {
 	volumes := []EbsVolume{}
-	//sess, err := InitialiseAWSCreds()
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
 	ebsInput := &ec2.DescribeVolumesInput{}
-	volumeResult := GetVolumes(ebsInput, Client, volumes)
-	fmt.Println(volumeResult)
+	volumeResult := GetVolumes(ebsInput, svc, volumes)
+	countUnencryptedEBS := 0
+	volID := []string{}
+	for _, ev := range volumeResult {
+		if ev.Encrypted == false {
+			volID = append(volID, ev.VolumeID)
+			countUnencryptedEBS++
+		}
+	}
+
+	if len(volumeResult) > 0 {
+		log.Printf("Total Unencrypted EBS Volumes in Region: %v is %v\nVolume IDs: %v \n", region, countUnencryptedEBS, volID)
+	}
 }
 
 func GetVolumes(ebsInput *ec2.DescribeVolumesInput, svc *ec2.EC2, vol []EbsVolume) []EbsVolume {
@@ -55,24 +57,27 @@ func GetVolumes(ebsInput *ec2.DescribeVolumesInput, svc *ec2.EC2, vol []EbsVolum
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(ebsOutput)
-	return nil
-}
+	if len(ebsOutput.Volumes) > 0 {
+		for _, v := range ebsOutput.Volumes {
+			e := EbsVolume{}
+			e.VolumeID = *v.VolumeId
+			e.Encrypted = *v.Encrypted
+			e.Az = *v.AvailabilityZone
+			e.InuseState = *v.State
+			vol = append(vol, e)
+		}
+		if ebsInput.NextToken != nil {
+			ebsInput.SetNextToken(*ebsOutput.NextToken)
+			GetVolumes(ebsInput, svc, vol)
+		}
+	}
 
-func handler() {
-	log.Println("Hello")
-
+	return vol
 }
 
 func main() {
-	sess, err := InitialiseAWSCreds()
-	if err != nil {
-		fmt.Println(err)
+	reg := []string{"us-east-1"}
+	for _, r := range reg {
+		AssessEncryption(r)
 	}
-	region := []string{"us-east-1", "us-west-2"}
-	for _, particularRegion := range region {
-		AssessEncryption(particularRegion, sess)
-	}
-
-	//lambda.Start(handler)
 }
